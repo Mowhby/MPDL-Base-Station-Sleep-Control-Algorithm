@@ -13,23 +13,29 @@ departure_lambda = 2  # Example departure rate parameter
 vi = np.random.poisson(arrival_lambda, N) / 10  # Normalize to probabilities
 wi = np.random.poisson(departure_lambda, N) / 10  # Normalize to probabilities
 
+
 # Helper Functions
 def J(ui, uj):
     # Decision function for deep sleep
     P_ui = ui / Umax
     P_uj = uj / Umax
-    return P_ui + P_uj - (P_ui + P_uj)**2
+    return P_ui + P_uj - (P_ui + P_uj) ** 2
+
 
 def update_load(ui, arrivals, departures):
     return max(0, ui + arrivals - departures)
+
 
 def transition_to_sleep(state, delay):
     if state < L and delay < acceptable_delay:
         return "Light Sleep"
     return "Deep Sleep"
 
-# Initialization
-X = np.zeros((T + 1, N))  # State of each base station over time
+
+X = np.zeros((T + 1,
+              N))  # State of each base station over time. 2D array based on time series and state of each Base station over time.
+# Actually saves number of users assigned to each base station over time.
+
 c_values = np.random.rand(T)  # Random parameter c for each time step
 
 for t in range(1, T + 1):
@@ -57,8 +63,16 @@ for t in range(1, T + 1):
                 X[t, i] = X[t - 1, i] + 1
 
         elif sum(vi) + sum(wi[:i]) < c <= sum(vi) + sum(wi[:i + 1]):  # User departure
-            if X[t - 1, i] > 0:
-                X[t, i] = max(0, X[t - 1, i] - 1)
+            neighbors = [j for j in range(N) if j != i]
+            max_j = max(neighbors, key=lambda j: J(X[t - 1, i] - 1, X[t - 1, j]))
+            if J(X[t - 1, i] - 1, X[t - 1, max_j]) > 0:
+                X[t, i] = 0
+                k = len(neighbors)
+                if k > 0:
+                    for j in neighbors:
+                        X[t, j] = X[t - 1, j] + (X[t - 1, i] - 1) / k
+            else:
+                X[t, i] = X[t - 1, i] - 1
 
         else:  # No user activity
             X[t, i] = X[t - 1, i]
@@ -66,12 +80,9 @@ for t in range(1, T + 1):
         # Sleep transition evaluation
         load_ratio = X[t, i] / Umax
         if load_ratio < L:
-            state = transition_to_sleep(load_ratio, delay=0.1)  # Placeholder for delay calculation
+            state = transition_to_sleep(load_ratio,
+                                        delay=0.1)  # Placeholder for delay calculation. Value of delay should be calculated and place here.
             if state == "Light Sleep":
                 print(f"Base station {i} enters light sleep at time {t}.")
             elif state == "Deep Sleep":
                 print(f"Base station {i} enters deep sleep at time {t}.")
-
-# Output the final states
-print("Final network state:")
-print(X)
