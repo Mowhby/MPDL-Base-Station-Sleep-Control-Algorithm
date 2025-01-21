@@ -1,4 +1,4 @@
-# **MPDL-Base-Station-Sleep-Control-Algorithm-and-Variables**
+# **MPDL-Base-Station-Sleep-Control-Algorithm**
 
 ## **Project Overview**
 This project implements an algorithm to control the sleep time of base stations in a mobile network. The goal is to optimize power consumption while maintaining quality of service (QoS) for users.
